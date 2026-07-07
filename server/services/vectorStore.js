@@ -85,14 +85,15 @@ class InMemoryVectorStore {
 class VectorStoreService {
   constructor() {
     this.store = null;
-    this.embeddings = new GoogleGenerativeAIEmbeddings({
-      modelName: "text-embedding-004",
-    });
-    this.documentMeta = new Map(); // documentId -> { fileName, chunkCount }
+    this.embeddings = null;
+    this.documentMeta = new Map();
     this.useFaiss = !!FaissStore;
   }
 
   async initialize() {
+    this.embeddings = new GoogleGenerativeAIEmbeddings({
+      modelName: "text-embedding-004",
+    });
     fs.mkdirSync(STORE_DIR, { recursive: true });
     this._loadMeta();
 

@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
-import pdfParse from "pdf-parse";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { vectorStoreService } from "../services/vectorStore.js";
 
