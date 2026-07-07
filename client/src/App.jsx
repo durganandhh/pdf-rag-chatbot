@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatPanel from './components/ChatPanel';
 
+const API = import.meta.env.DEV ? '' : 'https://pdf-rag-chatbot-87kn.onrender.com';
+
 export default function App() {
   const [messages, setMessages] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -11,7 +13,7 @@ export default function App() {
 
   const fetchDocuments = useCallback(async () => {
     try {
-      const res = await fetch('/api/documents');
+      const res = await fetch(`${API}/api/documents`);
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents || data);
@@ -30,7 +32,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload', {
+      const res = await fetch(`${API}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -53,7 +55,7 @@ export default function App() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API}/api/documents/${id}`, { method: 'DELETE' });
       if (res.ok) await fetchDocuments();
     } catch (err) {
       console.error('Delete error:', err);
@@ -70,7 +72,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/query', {
+      const res = await fetch(`${API}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
