@@ -1,0 +1,7 @@
+node_modules/
+.env
+server/uploads/
+server/faiss-store/
+dist/
+.DS_Store
+*.log
