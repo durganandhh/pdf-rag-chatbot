@@ -8,11 +8,13 @@ import { vectorStoreService } from "./services/vectorStore.js";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({
-  origin: true,
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
-}));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use(express.json());
 
 // Initialize vector store before accepting requests
