@@ -51,18 +51,22 @@ export function uploadRoute(req, res) {
     }
 
     try {
+      console.log(`Processing upload: ${req.file.originalname} (${req.file.size} bytes)`);
       const pdfBuffer = fs.readFileSync(req.file.path);
+      console.log("PDF buffer read, parsing...");
       const pdfData = await pdfParse(pdfBuffer);
+      console.log(`PDF parsed: ${pdfData.text.length} chars`);
 
       if (!pdfData.text || pdfData.text.trim().length === 0) {
         return res.status(400).json({ error: "PDF contains no extractable text" });
       }
 
       const docs = splitText(pdfData.text);
+      console.log(`Split into ${docs.length} chunks, generating embeddings...`);
       const documentId = uuidv4();
       await vectorStoreService.addDocuments(docs, documentId, req.file.originalname);
+      console.log("Embeddings stored successfully");
 
-      // Clean up uploaded file
       fs.unlinkSync(req.file.path);
 
       res.json({
@@ -72,7 +76,8 @@ export function uploadRoute(req, res) {
         chunks: docs.length,
       });
     } catch (parseErr) {
-      console.error("Upload processing error:", parseErr);
+      console.error("Upload processing error:", parseErr.message);
+      console.error("Stack:", parseErr.stack);
       res.status(500).json({ error: "Failed to process PDF", details: parseErr.message });
     }
   });

@@ -36,7 +36,10 @@ export default function App() {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.details || errData.error || `Upload failed (${res.status})`);
+      }
       await fetchDocuments();
     } catch (err) {
       console.error('Upload error:', err);
