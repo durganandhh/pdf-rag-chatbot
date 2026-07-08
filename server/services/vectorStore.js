@@ -25,8 +25,7 @@ class VectorStoreService {
   }
 
   async initialize() {
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    this.embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
     fs.mkdirSync(STORE_DIR, { recursive: true });
     this._loadMeta();
     this._loadVectors();
@@ -34,10 +33,13 @@ class VectorStoreService {
   }
 
   async _embed(texts) {
-    const result = await this.embeddingModel.batchEmbedContents({
-      requests: texts.map((t) => ({ content: { parts: [{ text: t }], role: "user" } })),
-    });
-    return result.embeddings.map((e) => e.values);
+    const model = this.genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const results = [];
+    for (const text of texts) {
+      const res = await model.embedContent(text);
+      results.push(res.embedding.values);
+    }
+    return results;
   }
 
   async addDocuments(docs, documentId, fileName) {
