@@ -4,12 +4,25 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { vectorStoreService } from "../services/vectorStore.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+function splitText(text, chunkSize = 500, overlap = 50) {
+  const chunks = [];
+  let start = 0;
+  while (start < text.length) {
+    const end = Math.min(start + chunkSize, text.length);
+    const chunk = text.slice(start, end).trim();
+    if (chunk.length > 0) {
+      chunks.push({ pageContent: chunk, metadata: {} });
+    }
+    start += chunkSize - overlap;
+  }
+  return chunks;
+}
 
 const storage = multer.diskStorage({
   destination: UPLOADS_DIR,
@@ -18,7 +31,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") {
       cb(null, true);
@@ -31,15 +44,13 @@ const upload = multer({
 export function uploadRoute(req, res) {
   upload(req, res, async (err) => {
     if (err) {
-      const status = err instanceof multer.MulterError ? 400 : 400;
-      return res.status(status).json({ error: err.message });
+      return res.status(400).json({ error: err.message });
     }
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
     try {
-      // Parse PDF
       const pdfBuffer = fs.readFileSync(req.file.path);
       const pdfData = await pdfParse(pdfBuffer);
 
@@ -47,16 +58,12 @@ export function uploadRoute(req, res) {
         return res.status(400).json({ error: "PDF contains no extractable text" });
       }
 
-      // Split into chunks
-      const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 500,
-        chunkOverlap: 50,
-      });
-      const docs = await splitter.createDocuments([pdfData.text]);
-
-      // Store in vector store
+      const docs = splitText(pdfData.text);
       const documentId = uuidv4();
       await vectorStoreService.addDocuments(docs, documentId, req.file.originalname);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
 
       res.json({
         success: true,
