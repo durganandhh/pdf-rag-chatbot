@@ -33,7 +33,7 @@ class VectorStoreService {
   }
 
   async _embed(texts) {
-    const model = this.genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const model = this.genAI.getGenerativeModel({ model: "gemini-embedding-001" });
     const results = [];
     for (const text of texts) {
       const res = await model.embedContent(text);
